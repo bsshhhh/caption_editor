@@ -30,20 +30,20 @@
     }
     h2 {
       margin-top: 0;
-      font-size: 20px;
+      font-size: 22px;
     }
     .section {
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
     button {
-      padding: 8px 14px;
+      padding: 12px 18px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
       background: #4f46e5;
       color: white;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 16px;
+      font-weight: 600;
     }
     button:disabled {
       opacity: 0.5;
@@ -57,19 +57,51 @@
 
     textarea, input[type="number"], input[type="text"], select {
       width: 100%;
-      padding: 8px;
-      font-size: 14px;
-      border-radius: 8px;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
       border: 1px solid #d1d5db;
       box-sizing: border-box;
     }
-    .row { display: flex; gap: 10px; }
+    .row { display: flex; gap: 14px; }
+
     canvas {
       max-width: 100%;
       display: block;
-      margin-top: 10px;
+      margin-top: 12px;
       background: #111;
-      border-radius: 8px;
+      border-radius: 12px;
+      /* PC에서는 기본, 모바일은 확대됨 */
+    }
+
+    /* -------------------------
+         모바일 최적화
+       ------------------------- */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      .container {
+        padding: 16px;
+      }
+      h2 {
+        font-size: 20px;
+      }
+      button {
+        padding: 14px 20px;
+        font-size: 18px;
+      }
+      textarea,
+      input[type="number"],
+      select {
+        padding: 14px;
+        font-size: 18px;
+      }
+      #canvas {
+        transform: scale(1.25);
+        transform-origin: top left;
+        margin-top: 20px;
+      }
     }
   </style>
 </head>
@@ -92,11 +124,11 @@
         <button id="ratio45">4:5 (세로)</button>
       </div>
 
-      <div style="margin-top: 12px;">
-        <img id="cropImage" style="max-width: 100%; display: block;">
+      <div style="margin-top: 16px;">
+        <img id="cropImage" style="max-width: 100%; display: block; border-radius: 12px;">
       </div>
 
-      <button id="cropDoneBtn" style="margin-top: 12px;">크롭 완료</button>
+      <button id="cropDoneBtn" style="margin-top: 16px;">크롭 완료</button>
     </div>
 
     <!-- STEP 3: 텍스트 -->
@@ -105,12 +137,12 @@
 
       <textarea id="textInput" placeholder="최대 2줄까지 입력 가능"></textarea>
 
-      <div class="row" style="margin-top: 12px;">
-        <div>
+      <div class="row" style="margin-top: 16px;">
+        <div style="flex: 1;">
           <label>글자 크기(px)</label>
           <input id="fontSizeInput" type="number" value="60" />
         </div>
-        <div>
+        <div style="flex: 1;">
           <label>위치</label>
           <select id="positionSelect">
             <option value="bottom">아래</option>
@@ -120,14 +152,14 @@
         </div>
       </div>
 
-      <div style="margin-top: 12px;">
+      <div style="margin-top: 16px;">
         <label>글자 색</label>
         <input id="colorInput" type="color" value="#ffffff" />
       </div>
 
       <canvas id="canvas"></canvas>
 
-      <button id="downloadBtn" style="margin-top: 16px;">이미지 다운로드</button>
+      <button id="downloadBtn" style="margin-top: 20px;">이미지 다운로드</button>
     </div>
 
   </div>
@@ -155,6 +187,13 @@
     let imageLoaded = false;
     let currentRatio = 1;
 
+    const isMobile = window.innerWidth < 768;
+
+    /* 모바일에서 기본 글자 크기 증가 */
+    if (isMobile) {
+      fontSizeInput.value = 90;
+    }
+
     /* STEP 1 — 업로드 */
     imageInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
@@ -175,6 +214,7 @@
 
         currentRatio = 1;
         cropSection.classList.remove("hidden");
+        window.scrollTo(0, document.body.scrollHeight);
       };
 
       reader.readAsDataURL(file);
@@ -201,7 +241,6 @@
 
       const croppedOriginal = cropper.getCroppedCanvas();
 
-      // 고정 캔버스
       let finalW = 1080;
       let finalH = currentRatio === 1 ? 1080 : 1350;
 
@@ -215,15 +254,15 @@
       img.onload = () => {
         imageLoaded = true;
         textSection.classList.remove("hidden");
+        window.scrollTo(0, document.body.scrollHeight);
+
         document.fonts.ready.then(() => redraw());
       };
 
       img.src = fixedCanvas.toDataURL("image/png");
     });
 
-    /* STEP 3 — 텍스트 */
-
-    // 2줄 제한
+    /* STEP 3 — 텍스트 변경 */
     textInput.addEventListener("input", () => {
       let lines = textInput.value.split("\n");
       if (lines.length > 2) {
@@ -268,7 +307,7 @@
       if (!imageLoaded) return;
 
       const text = textInput.value || "";
-      const fontSize = parseInt(fontSizeInput.value, 10) || 60;
+      const fontSize = parseInt(fontSizeInput.value, 10);
       const color = colorInput.value;
 
       canvas.width = img.width;
@@ -284,20 +323,20 @@
       ctx.textBaseline = "middle";
       ctx.fillStyle = color;
 
-      ctx.strokeStyle = "rgba(0,0,0,0.6)";
+      ctx.strokeStyle = "rgba(0,0,0,0.65)";
       ctx.lineWidth = fontSize / 10;
 
-      const lines = wrapText(ctx, text, canvas.width * 0.9);
-      const lineHeight = fontSize * 1.15;
+      const lines = wrapText(ctx, text, canvas.width * 0.90);
+      const lineHeight = fontSize * 1.1;
       const totalHeight = lineHeight * (lines.length - 1);
 
       let startY;
       if (positionSelect.value === "top") {
-        startY = canvas.height * 0.1;
+        startY = canvas.height * 0.12;
       } else if (positionSelect.value === "middle") {
         startY = canvas.height / 2 - totalHeight / 2;
       } else {
-        startY = canvas.height * 0.9 - totalHeight;
+        startY = canvas.height * 0.88 - totalHeight;
       }
 
       const centerX = canvas.width / 2;
