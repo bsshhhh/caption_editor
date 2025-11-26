@@ -89,7 +89,7 @@
 
       <div class="ratio-buttons">
         <button id="ratio1">정방형 (1:1)</button>
-        <button id="ratio45">4:5 (인스타 세로)</button>
+        <button id="ratio45">4:5 (세로)</button>
       </div>
 
       <div style="margin-top: 12px;">
@@ -99,7 +99,7 @@
       <button id="cropDoneBtn" style="margin-top: 12px;">크롭 완료</button>
     </div>
 
-    <!-- STEP 3: 텍스트 얹기 -->
+    <!-- STEP 3: 텍스트 -->
     <div id="textSection" class="section hidden">
       <h2>3. 텍스트 입력</h2>
 
@@ -108,7 +108,7 @@
       <div class="row" style="margin-top: 12px;">
         <div>
           <label>글자 크기(px)</label>
-          <input id="fontSizeInput" type="number" value="48" />
+          <input id="fontSizeInput" type="number" value="60" />
         </div>
         <div>
           <label>위치</label>
@@ -153,10 +153,9 @@
     let cropper;
     let img = new Image();
     let imageLoaded = false;
+    let currentRatio = 1;
 
-    /* --------------------------
-        STEP 1: 이미지 업로드
-    ---------------------------*/
+    /* STEP 1 — 업로드 */
     imageInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -165,54 +164,64 @@
       reader.onload = (event) => {
         cropImage.src = event.target.result;
 
-        // cropper 초기화
         if (cropper) cropper.destroy();
 
         cropper = new Cropper(cropImage, {
           viewMode: 1,
           dragMode: "move",
           autoCropArea: 1,
-          aspectRatio: 1, // 기본값
+          aspectRatio: 1,
         });
 
+        currentRatio = 1;
         cropSection.classList.remove("hidden");
       };
 
       reader.readAsDataURL(file);
     });
 
-    /* --------------------------
-        STEP 2: 비율 버튼
-    ---------------------------*/
+    /* 비율 변경 */
     ratio1.addEventListener("click", () => {
-      if (cropper) cropper.setAspectRatio(1);
+      if (cropper) {
+        cropper.setAspectRatio(1);
+        currentRatio = 1;
+      }
     });
 
     ratio45.addEventListener("click", () => {
-      if (cropper) cropper.setAspectRatio(4/5);
+      if (cropper) {
+        cropper.setAspectRatio(4/5);
+        currentRatio = 4/5;
+      }
     });
 
-    /* --------------------------
-        STEP 2: 크롭 완료
-    ---------------------------*/
+    /* STEP 2 — 크롭 완료 */
     cropDoneBtn.addEventListener("click", () => {
       if (!cropper) return;
 
-      const croppedCanvas = cropper.getCroppedCanvas({ fillColor: "#fff" });
+      const croppedOriginal = cropper.getCroppedCanvas();
+
+      // 고정 캔버스
+      let finalW = 1080;
+      let finalH = currentRatio === 1 ? 1080 : 1350;
+
+      const fixedCanvas = document.createElement("canvas");
+      fixedCanvas.width = finalW;
+      fixedCanvas.height = finalH;
+      const fctx = fixedCanvas.getContext("2d");
+
+      fctx.drawImage(croppedOriginal, 0, 0, finalW, finalH);
 
       img.onload = () => {
         imageLoaded = true;
         textSection.classList.remove("hidden");
-
         document.fonts.ready.then(() => redraw());
       };
 
-      img.src = croppedCanvas.toDataURL("image/png");
+      img.src = fixedCanvas.toDataURL("image/png");
     });
 
-    /* --------------------------
-        STEP 3: 텍스트 렌더링
-    ---------------------------*/
+    /* STEP 3 — 텍스트 */
 
     // 2줄 제한
     textInput.addEventListener("input", () => {
@@ -259,7 +268,7 @@
       if (!imageLoaded) return;
 
       const text = textInput.value || "";
-      const fontSize = parseInt(fontSizeInput.value, 10) || 48;
+      const fontSize = parseInt(fontSizeInput.value, 10) || 60;
       const color = colorInput.value;
 
       canvas.width = img.width;
@@ -270,21 +279,19 @@
 
       if (!text.trim()) return;
 
-      ctx.font = `600 ${fontSize}px Pretendard`;
+      ctx.font = `700 ${fontSize}px Pretendard`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = color;
 
-      // 가독성 위해 테두리
-      ctx.lineWidth = fontSize / 10;
       ctx.strokeStyle = "rgba(0,0,0,0.6)";
+      ctx.lineWidth = fontSize / 10;
 
       const lines = wrapText(ctx, text, canvas.width * 0.9);
-      const lineHeight = fontSize * 1.1;
-
-      let startY;
+      const lineHeight = fontSize * 1.15;
       const totalHeight = lineHeight * (lines.length - 1);
 
+      let startY;
       if (positionSelect.value === "top") {
         startY = canvas.height * 0.1;
       } else if (positionSelect.value === "middle") {
@@ -302,9 +309,7 @@
       });
     }
 
-    /* --------------------------
-        STEP 4: 다운로드
-    ---------------------------*/
+    /* STEP 4 — 다운로드 */
     downloadBtn.addEventListener("click", () => {
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
