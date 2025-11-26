@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>인스타 이미지 텍스트 합성기</title>
+
+  <!-- Pretendard -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css">
+
+  <!-- Cropper.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: #f3f4f6;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+    .section {
+      margin-bottom: 24px;
+    }
+    button {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #4f46e5;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .ratio-buttons button {
+      background: #6b7280;
+      margin-right: 8px;
+    }
+    .hidden { display: none; }
+
+    textarea, input[type="number"], input[type="text"], select {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      box-sizing: border-box;
+    }
+    .row { display: flex; gap: 10px; }
+    canvas {
+      max-width: 100%;
+      display: block;
+      margin-top: 10px;
+      background: #111;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- STEP 1: 업로드 -->
+    <div class="section">
+      <h2>1. 이미지 업로드</h2>
+      <input type="file" id="imageInput" accept="image/*" />
+    </div>
+
+    <!-- STEP 2: 크롭 -->
+    <div id="cropSection" class="section hidden">
+      <h2>2. 인스타용 비율 선택 후 크롭</h2>
+
+      <div class="ratio-buttons">
+        <button id="ratio1">정방형 (1:1)</button>
+        <button id="ratio45">4:5 (인스타 세로)</button>
+      </div>
+
+      <div style="margin-top: 12px;">
+        <img id="cropImage" style="max-width: 100%; display: block;">
+      </div>
+
+      <button id="cropDoneBtn" style="margin-top: 12px;">크롭 완료</button>
+    </div>
+
+    <!-- STEP 3: 텍스트 얹기 -->
+    <div id="textSection" class="section hidden">
+      <h2>3. 텍스트 입력</h2>
+
+      <textarea id="textInput" placeholder="최대 2줄까지 입력 가능"></textarea>
+
+      <div class="row" style="margin-top: 12px;">
+        <div>
+          <label>글자 크기(px)</label>
+          <input id="fontSizeInput" type="number" value="48" />
+        </div>
+        <div>
+          <label>위치</label>
+          <select id="positionSelect">
+            <option value="bottom">아래</option>
+            <option value="middle">가운데</option>
+            <option value="top">위</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;">
+        <label>글자 색</label>
+        <input id="colorInput" type="color" value="#ffffff" />
+      </div>
+
+      <canvas id="canvas"></canvas>
+
+      <button id="downloadBtn" style="margin-top: 16px;">이미지 다운로드</button>
+    </div>
+
+  </div>
+
+  <script>
+    const imageInput = document.getElementById("imageInput");
+    const cropSection = document.getElementById("cropSection");
+    const textSection = document.getElementById("textSection");
+    const cropImage = document.getElementById("cropImage");
+    const cropDoneBtn = document.getElementById("cropDoneBtn");
+    const ratio1 = document.getElementById("ratio1");
+    const ratio45 = document.getElementById("ratio45");
+
+    const textInput = document.getElementById("textInput");
+    const fontSizeInput = document.getElementById("fontSizeInput");
+    const positionSelect = document.getElementById("positionSelect");
+    const colorInput = document.getElementById("colorInput");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let cropper;
+    let img = new Image();
+    let imageLoaded = false;
+
+    /* --------------------------
+        STEP 1: 이미지 업로드
+    ---------------------------*/
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        cropImage.src = event.target.result;
+
+        // cropper 초기화
+        if (cropper) cropper.destroy();
+
+        cropper = new Cropper(cropImage, {
+          viewMode: 1,
+          dragMode: "move",
+          autoCropArea: 1,
+          aspectRatio: 1, // 기본값
+        });
+
+        cropSection.classList.remove("hidden");
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    /* --------------------------
+        STEP 2: 비율 버튼
+    ---------------------------*/
+    ratio1.addEventListener("click", () => {
+      if (cropper) cropper.setAspectRatio(1);
+    });
+
+    ratio45.addEventListener("click", () => {
+      if (cropper) cropper.setAspectRatio(4/5);
+    });
+
+    /* --------------------------
+        STEP 2: 크롭 완료
+    ---------------------------*/
+    cropDoneBtn.addEventListener("click", () => {
+      if (!cropper) return;
+
+      const croppedCanvas = cropper.getCroppedCanvas({ fillColor: "#fff" });
+
+      img.onload = () => {
+        imageLoaded = true;
+        textSection.classList.remove("hidden");
+
+        document.fonts.ready.then(() => redraw());
+      };
+
+      img.src = croppedCanvas.toDataURL("image/png");
+    });
+
+    /* --------------------------
+        STEP 3: 텍스트 렌더링
+    ---------------------------*/
+
+    // 2줄 제한
+    textInput.addEventListener("input", () => {
+      let lines = textInput.value.split("\n");
+      if (lines.length > 2) {
+        lines = lines.slice(0, 2);
+        textInput.value = lines.join("\n");
+      }
+      redraw();
+    });
+
+    fontSizeInput.addEventListener("input", redraw);
+    positionSelect.addEventListener("change", redraw);
+    colorInput.addEventListener("input", redraw);
+
+    function wrapText(context, text, maxWidth) {
+      const paragraphs = text.split(/\n/);
+      const lines = [];
+
+      paragraphs.forEach((para) => {
+        const words = para.split(/\s+/);
+        let line = "";
+
+        words.forEach((word) => {
+          if (!word) return;
+          const testLine = line ? line + " " + word : word;
+          const { width } = context.measureText(testLine);
+
+          if (width > maxWidth && line) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = testLine;
+          }
+        });
+
+        if (line) lines.push(line);
+      });
+
+      return lines;
+    }
+
+    function redraw() {
+      if (!imageLoaded) return;
+
+      const text = textInput.value || "";
+      const fontSize = parseInt(fontSizeInput.value, 10) || 48;
+      const color = colorInput.value;
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      if (!text.trim()) return;
+
+      ctx.font = `600 ${fontSize}px Pretendard`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = color;
+
+      // 가독성 위해 테두리
+      ctx.lineWidth = fontSize / 10;
+      ctx.strokeStyle = "rgba(0,0,0,0.6)";
+
+      const lines = wrapText(ctx, text, canvas.width * 0.9);
+      const lineHeight = fontSize * 1.1;
+
+      let startY;
+      const totalHeight = lineHeight * (lines.length - 1);
+
+      if (positionSelect.value === "top") {
+        startY = canvas.height * 0.1;
+      } else if (positionSelect.value === "middle") {
+        startY = canvas.height / 2 - totalHeight / 2;
+      } else {
+        startY = canvas.height * 0.9 - totalHeight;
+      }
+
+      const centerX = canvas.width / 2;
+
+      lines.forEach((line, idx) => {
+        const y = startY + idx * lineHeight;
+        ctx.strokeText(line, centerX, y);
+        ctx.fillText(line, centerX, y);
+      });
+    }
+
+    /* --------------------------
+        STEP 4: 다운로드
+    ---------------------------*/
+    downloadBtn.addEventListener("click", () => {
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "insta-image.png";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    });
+
+  </script>
+</body>
+</html>
