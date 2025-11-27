@@ -69,10 +69,32 @@
       cursor: default;
     }
 
-    .ratio-buttons button {
-      background: #6b7280;
-      margin-right: 0.5rem;
+    .ratio-buttons {
+      display: flex;
+      justify-content: space-between; /* 버튼 사이 일정 간격 */
+      gap: 0.8rem; /* 버튼 사이 여백 */
     }
+
+    .ratio-buttons button {
+      flex: 1;                /* ✅ 버튼이 균등 분할 */
+      font-size: 1.1rem;      /* ✅ 모바일에서도 큼 */
+      padding: 1rem 0;        /* ✅ 터치 영역 충분 */
+      border-radius: 0.6rem;
+      background: #6b7280;
+    }
+
+    /* 크롭 완료 & 다운로드 버튼 전체 폭 차지 */
+    #cropDoneBtn,
+    #downloadBtn {
+      width: 100%;
+      display: block;
+      font-size: 1.1rem;
+      padding: 1.2rem 0;
+      border-radius: 0.8rem;
+      margin-top: 1rem;
+    }
+
+
 
     .hidden { display: none; }
 
@@ -122,10 +144,11 @@
       }
 
       button {
-        width: 100%;
-        font-size: 1.2rem;   /* ✅ 버튼 글자 더 큼 */
-        padding: 1.2rem 0;   /* ✅ 터치 영역 확대 */
+        font-size: 1.2rem;     /* ✅ 글자 크기만 키움 */
+        padding: 1.2rem 1.2rem; /* ✅ 터치 영역 넉넉하게 */
+        min-width: 44px;       /* ✅ 터치 최소 영역 확보 (Apple 권장) */
       }
+
 
       textarea,
       input[type="number"],
