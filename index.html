@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>인스타 이미지 텍스트 합성기</title>
 
   <!-- Pretendard -->
@@ -12,6 +13,10 @@
   <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
 
   <style>
+    html, body {
+      -webkit-text-size-adjust: 100%;
+    }
+
     :root {
       font-size: 16px; /* 기본값 (PC 기준) */
     }
@@ -101,41 +106,41 @@
        ------------------------- */
     @media (max-width: 768px) {
       :root {
-        font-size: 18px; /* 모바일 전체 폰트 확대 */
+        font-size: 20px; /* ✅ rem 전체 확대 */
       }
 
       body {
-        padding: 4vw;
+        padding: 5vw;
       }
 
       .container {
-        padding: 1.25rem;
+        padding: 1.5rem;
       }
 
       h2 {
-        font-size: 1.35rem;
+        font-size: 1.5rem;
       }
 
       button {
         width: 100%;
-        font-size: 1.1rem;
-        padding: 1rem 0;
+        font-size: 1.2rem;   /* ✅ 버튼 글자 더 큼 */
+        padding: 1.2rem 0;   /* ✅ 터치 영역 확대 */
       }
 
       textarea,
       input[type="number"],
       select {
-        font-size: 1.1rem;
-        padding: 1.1rem;
+        font-size: 1.2rem;
+        padding: 1.2rem;
       }
 
-      /* ❗ 캔버스를 확대하지 않고 화면 너비에 맞게 조정 */
       #canvas {
         width: 100%;
         height: auto;
-        margin-top: 1.25rem;
+        margin-top: 1.5rem;
       }
     }
+
 
   </style>
 
