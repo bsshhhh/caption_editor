@@ -425,44 +425,27 @@
 
     /* STEP 4 — 다운로드 */
     downloadBtn.addEventListener("click", () => {
-      // blob 생성 가능한 경우 (대부분의 브라우저)
-      if (canvas.toBlob) {
-        canvas.toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-
-          // ✅ 모바일(특히 안드로이드)에서는 직접 새 탭으로 열기
-          if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            window.open(url, "_blank"); 
-          } else {
-            // ✅ PC 환경에서는 자동 다운로드
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "insta-image.png";
-            a.click();
-          }
-
-          // 메모리 정리
-          setTimeout(() => URL.revokeObjectURL(url), 2000);
-        });
-      } 
-      // 일부 오래된 브라우저 fallback
-      else {
-        const dataUrl = canvas.toDataURL("image/png");
-        if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-          window.open(dataUrl, "_blank");
-        } else {
-          const a = document.createElement("a");
-          a.href = dataUrl;
-          a.download = "insta-image.png";
-          a.click();
-        }
-      }
+      canvas.toBlob((blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+    
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = "insta-image.png";
+        document.body.appendChild(a);
+    
+        a.click();  // ← Android에서 다운로드 허용 (사용자 제스처 inside click)
+        a.remove();
+    
+        URL.revokeObjectURL(blobUrl);
+      });
     });
+
 
 
   </script>
 </body>
 </html>
+
 
 
 
