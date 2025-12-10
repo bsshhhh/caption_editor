@@ -8,9 +8,8 @@
   <!-- Pretendard -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css">
 
-  <!-- Cropper.js -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
+  <!-- MaruBuri (네이버 한글 웹폰트) -->
+  <link href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" rel="stylesheet">
 
   <style>
     html, body {
@@ -18,7 +17,7 @@
     }
 
     :root {
-      font-size: 16px; /* 기본값 (PC 기준) */
+      font-size: 16px;
     }
 
     body {
@@ -33,70 +32,14 @@
     .container {
       width: 100%;
       max-width: 900px;
-      background: #ffffff;
+      background: white;
       border-radius: 1rem;
       padding: 1.5rem;
       box-shadow: 0 8px 24px rgba(0,0,0,0.06);
     }
 
-    h2 {
-      margin-top: 0;
-      font-size: 1.5rem;
-    }
-
-    .section {
-      margin-bottom: 2rem;
-    }
-
-    button {
-      padding: 0.8rem 1.2rem;
-      border-radius: 0.6rem;
-      border: none;
-      cursor: pointer;
-      background: #4f46e5;
-      color: white;
-      font-size: 1rem;
-      font-weight: 600;
-      transition: transform 0.1s;
-    }
-
-    button:hover:not(:disabled) {
-      transform: scale(1.03);
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-
-    .ratio-buttons {
-      display: flex;
-      justify-content: space-between; /* 버튼 사이 일정 간격 */
-      gap: 0.8rem; /* 버튼 사이 여백 */
-    }
-
-    .ratio-buttons button {
-      flex: 1;                /* ✅ 버튼이 균등 분할 */
-      font-size: 1.1rem;      /* ✅ 모바일에서도 큼 */
-      padding: 1rem 0;        /* ✅ 터치 영역 충분 */
-      border-radius: 0.6rem;
-      background: #6b7280;
-    }
-
-    /* 크롭 완료 & 다운로드 버튼 전체 폭 차지 */
-    #cropDoneBtn,
-    #downloadBtn {
-      width: 100%;
-      display: block;
-      font-size: 1.1rem;
-      padding: 1.2rem 0;
-      border-radius: 0.8rem;
-      margin-top: 1rem;
-    }
-
-
-
-    .hidden { display: none; }
+    h2 { margin-top: 0; font-size: 1.5rem; }
+    .section { margin-bottom: 2rem; }
 
     textarea,
     input[type="number"],
@@ -110,342 +53,239 @@
       box-sizing: border-box;
     }
 
-    .row {
-      display: flex;
-      gap: 1rem;
-    }
-
     canvas {
       max-width: 100%;
       display: block;
-      margin-top: 0.75rem;
+      margin-top: 1rem;
       background: #111;
       border-radius: 0.8rem;
     }
 
-    /* -------------------------
-         모바일 최적화
-       ------------------------- */
-    @media (max-width: 768px) {
-      :root {
-        font-size: 20px; /* ✅ rem 전체 확대 */
-      }
-
-      body {
-        padding: 5vw;
-      }
-
-      .container {
-        padding: 1.5rem;
-      }
-
-      h2 {
-        font-size: 1.5rem;
-      }
-
-      button {
-        font-size: 1.2rem;     /* ✅ 글자 크기만 키움 */
-        padding: 1.2rem 1.2rem; /* ✅ 터치 영역 넉넉하게 */
-        min-width: 44px;       /* ✅ 터치 최소 영역 확보 (Apple 권장) */
-      }
-
-
-      textarea,
-      input[type="number"],
-      select {
-        font-size: 1.2rem;
-        padding: 1.2rem;
-      }
-
-      #canvas {
-        width: 100%;
-        height: auto;
-        margin-top: 1.5rem;
-      }
+    button {
+      width: 100%;
+      padding: 1rem 0;
+      border-radius: 0.6rem;
+      border: none;
+      cursor: pointer;
+      background: #4f46e5;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      transition: transform 0.1s;
     }
 
+    button:hover:not(:disabled) { transform: scale(1.03); }
 
+    /* 모바일 최적화 */
+    @media (max-width: 768px) {
+      :root { font-size: 20px; }
+      body { padding: 5vw; }
+      button { font-size: 1.2rem; padding: 1.2rem; }
+      textarea, input, select { font-size: 1.2rem; padding: 1.2rem; }
+    }
+
+    .hidden { display: none; }
   </style>
 
 </head>
 
 <body>
-  <div class="container">
+<div class="container">
 
-    <!-- STEP 1: 업로드 -->
-    <div class="section">
-      <h2>1. 이미지 업로드</h2>
-      <input type="file" id="imageInput" accept="image/*" />
-    </div>
-
-    <!-- STEP 2: 크롭 -->
-    <div id="cropSection" class="section hidden">
-      <h2>2. 인스타용 비율 선택 후 크롭</h2>
-
-      <div class="ratio-buttons">
-        <button id="ratio1">정방형 (1:1)</button>
-        <button id="ratio45">4:5 (세로)</button>
-      </div>
-
-      <div style="margin-top: 16px;">
-        <img id="cropImage" style="max-width: 100%; display: block; border-radius: 12px;">
-      </div>
-
-      <button id="cropDoneBtn" style="margin-top: 16px;">크롭 완료</button>
-    </div>
-
-    <!-- STEP 3: 텍스트 -->
-    <div id="textSection" class="section hidden">
-      <h2>3. 텍스트 입력</h2>
-
-      <textarea id="textInput" placeholder="최대 2줄까지 입력 가능"></textarea>
-
-      <div class="row" style="margin-top: 16px;">
-        <div style="flex: 1;">
-          <label>글자 크기(px)</label>
-          <input id="fontSizeInput" type="number" value="80" />
-        </div>
-        <div style="flex: 1;">
-          <label>세로 위치</label>
-          <select id="positionSelect">
-            <option value="bottom">아래</option>
-            <option value="middle">가운데</option>
-            <option value="top">위</option>
-          </select>
-        </div>
-        <div style="flex: 1;">
-          <label>가로 정렬</label>
-          <select id="alignSelect">
-            <option value="center">가운데</option>
-            <option value="left">왼쪽</option>
-            <option value="right">오른쪽</option>
-          </select>
-        </div>
-      </div>
-
-
-      <div style="margin-top: 16px;">
-        <label>글자 색</label>
-        <input id="colorInput" type="color" value="#ffffff" />
-      </div>
-
-      <canvas id="canvas"></canvas>
-
-      <button id="downloadBtn" style="margin-top: 20px;">이미지 다운로드</button>
-    </div>
-
+  <!-- STEP 1 -->
+  <div class="section">
+    <h2>1. 이미지 업로드</h2>
+    <input type="file" id="imageInput" accept="image/*" />
   </div>
 
-  <script>
-    const imageInput = document.getElementById("imageInput");
-    const cropSection = document.getElementById("cropSection");
-    const textSection = document.getElementById("textSection");
-    const cropImage = document.getElementById("cropImage");
-    const cropDoneBtn = document.getElementById("cropDoneBtn");
-    const ratio1 = document.getElementById("ratio1");
-    const ratio45 = document.getElementById("ratio45");
+  <!-- STEP 2 -->
+  <div id="textSection" class="section hidden">
+    <h2>2. 텍스트 입력</h2>
 
-    const textInput = document.getElementById("textInput");
-    const fontSizeInput = document.getElementById("fontSizeInput");
-    const positionSelect = document.getElementById("positionSelect");
-    const colorInput = document.getElementById("colorInput");
-    const downloadBtn = document.getElementById("downloadBtn");
+    <textarea id="textInput" placeholder="최대 2줄까지 입력 가능"></textarea>
 
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
+    <div style="margin-top: 16px;">
+      <label>글자 크기(px)</label>
+      <input id="fontSizeInput" type="number" value="80" />
+    </div>
 
-    let cropper;
-    let img = new Image();
-    let imageLoaded = false;
-    let currentRatio = 1;
+    <div style="margin-top: 16px;">
+      <label>세로 위치</label>
+      <select id="positionSelect">
+        <option value="bottom">아래</option>
+        <option value="middle">가운데</option>
+        <option value="top">위</option>
+      </select>
+    </div>
 
-    const isMobile = window.innerWidth < 768;
+    <div style="margin-top: 16px;">
+      <label>가로 정렬</label>
+      <select id="alignSelect">
+        <option value="center">가운데</option>
+        <option value="left">왼쪽</option>
+        <option value="right">오른쪽</option>
+      </select>
+    </div>
 
-    /* 모바일에서 기본 글자 크기 증가 */
-    if (isMobile) {
-      fontSizeInput.value = 70;
-    }
+    <div style="margin-top: 16px;">
+      <label>폰트 선택</label>
+      <select id="fontSelect">
+        <option value="Pretendard">프리텐다드</option>
+        <option value="MaruBuri">마루부리</option>
+      </select>
+    </div>
 
-    /* STEP 1 — 업로드 */
-    imageInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    <div style="margin-top: 16px;">
+      <label>글자 색</label>
+      <input id="colorInput" type="color" value="#ffffff" />
+    </div>
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        cropImage.src = event.target.result;
+    <canvas id="canvas"></canvas>
 
-        if (cropper) cropper.destroy();
+    <button id="downloadBtn">이미지 다운로드</button>
+  </div>
 
-        cropper = new Cropper(cropImage, {
-          viewMode: 1,
-          dragMode: "move",
-          autoCropArea: 1,
-          aspectRatio: 1,
-        });
+</div>
 
-        currentRatio = 1;
-        cropSection.classList.remove("hidden");
-        window.scrollTo(0, document.body.scrollHeight);
-      };
+<script>
+  const imageInput = document.getElementById("imageInput");
+  const textSection = document.getElementById("textSection");
 
-      reader.readAsDataURL(file);
-    });
+  const textInput = document.getElementById("textInput");
+  const fontSizeInput = document.getElementById("fontSizeInput");
+  const positionSelect = document.getElementById("positionSelect");
+  const alignSelect = document.getElementById("alignSelect");
+  const colorInput = document.getElementById("colorInput");
+  const fontSelect = document.getElementById("fontSelect");
 
-    /* 비율 변경 */
-    ratio1.addEventListener("click", () => {
-      if (cropper) {
-        cropper.setAspectRatio(1);
-        currentRatio = 1;
-      }
-    });
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
 
-    ratio45.addEventListener("click", () => {
-      if (cropper) {
-        cropper.setAspectRatio(4/5);
-        currentRatio = 4/5;
-      }
-    });
+  let img = new Image();
+  let imageLoaded = false;
 
-    /* STEP 2 — 크롭 완료 */
-    cropDoneBtn.addEventListener("click", () => {
-      if (!cropper) return;
+  /* STEP 1 — 업로드 → 바로 텍스트 섹션 열림 */
+  imageInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-      const croppedOriginal = cropper.getCroppedCanvas();
-
-      let finalW = 1080;
-      let finalH = currentRatio === 1 ? 1080 : 1350;
-
-      const fixedCanvas = document.createElement("canvas");
-      fixedCanvas.width = finalW;
-      fixedCanvas.height = finalH;
-      const fctx = fixedCanvas.getContext("2d");
-
-      fctx.drawImage(croppedOriginal, 0, 0, finalW, finalH);
-
+    const reader = new FileReader();
+    reader.onload = (event) => {
       img.onload = () => {
         imageLoaded = true;
         textSection.classList.remove("hidden");
-        window.scrollTo(0, document.body.scrollHeight);
 
         document.fonts.ready.then(() => redraw());
       };
 
-      img.src = fixedCanvas.toDataURL("image/png");
-    });
+      img.src = event.target.result;
+    };
 
-    /* STEP 3 — 텍스트 변경 */
-    textInput.addEventListener("input", () => {
-      let lines = textInput.value.split("\n");
-      if (lines.length > 2) {
-        lines = lines.slice(0, 2);
-        textInput.value = lines.join("\n");
-      }
-      redraw();
-    });
+    reader.readAsDataURL(file);
+  });
 
-    fontSizeInput.addEventListener("input", redraw);
-    positionSelect.addEventListener("change", redraw);
-    colorInput.addEventListener("input", redraw);
+  /* 텍스트 관련 이벤트 */
+  textInput.addEventListener("input", () => {
+    const lines = textInput.value.split("\n");
+    if (lines.length > 2) textInput.value = lines.slice(0, 2).join("\n");
+    redraw();
+  });
 
-    function wrapText(context, text, maxWidth) {
-      const paragraphs = text.split(/\n/);
-      const lines = [];
+  fontSizeInput.addEventListener("input", redraw);
+  positionSelect.addEventListener("change", redraw);
+  alignSelect.addEventListener("change", redraw);
+  colorInput.addEventListener("input", redraw);
+  fontSelect.addEventListener("change", redraw);
 
-      paragraphs.forEach((para) => {
-        const words = para.split(/\s+/);
-        let line = "";
+  /* 자동 줄바꿈 */
+  function wrapText(context, text, maxWidth) {
+    const paragraphs = text.split(/\n/);
+    const lines = [];
 
-        words.forEach((word) => {
-          if (!word) return;
-          const testLine = line ? line + " " + word : word;
-          const { width } = context.measureText(testLine);
+    paragraphs.forEach((para) => {
+      const words = para.split(/\s+/);
+      let line = "";
 
-          if (width > maxWidth && line) {
-            lines.push(line);
-            line = word;
-          } else {
-            line = testLine;
-          }
-        });
+      words.forEach((word) => {
+        if (!word) return;
+        const testLine = line ? line + " " + word : word;
+        const { width } = context.measureText(testLine);
 
-        if (line) lines.push(line);
+        if (width > maxWidth && line) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = testLine;
+        }
       });
 
-      return lines;
-    }
-
-    function redraw() {
-      if (!imageLoaded) return;
-
-      const text = textInput.value || "";
-      const fontSize = parseInt(fontSizeInput.value, 10);
-      const color = colorInput.value;
-      const alignSelect = document.getElementById("alignSelect");
-      alignSelect.addEventListener("change", redraw);
-
-
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      if (!text.trim()) return;
-
-      ctx.font = `700 ${fontSize}px Pretendard`;
-      ctx.textAlign = alignSelect.value;
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = color;
-
-      const lines = wrapText(ctx, text, canvas.width * 0.90);
-      const lineHeight = fontSize * 1.3;
-      const totalHeight = lineHeight * (lines.length - 1);
-
-      let startY;
-      if (positionSelect.value === "top") {
-        startY = canvas.height * 0.12;
-      } else if (positionSelect.value === "middle") {
-        startY = canvas.height / 2 - totalHeight / 2;
-      } else {
-        startY = canvas.height * 0.88 - totalHeight;
-      }
-
-      let centerX;
-      if (alignSelect.value === "left") centerX = canvas.width * 0.10;
-      else if (alignSelect.value === "right") centerX = canvas.width * 0.90;
-      else centerX = canvas.width / 2;
-
-      lines.forEach((line, idx) => {
-        const y = startY + idx * lineHeight;
-        ctx.fillText(line, centerX, y); // ✅ 테두리 제거, 텍스트만 그림
-      });
-
-    }
-
-    /* STEP 4 — 다운로드 */
-    downloadBtn.addEventListener("click", () => {
-      canvas.toBlob((blob) => {
-        const blobUrl = URL.createObjectURL(blob);
-    
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = "insta-image.png";
-        document.body.appendChild(a);
-    
-        a.click();  // ← Android에서 다운로드 허용 (사용자 제스처 inside click)
-        a.remove();
-    
-        URL.revokeObjectURL(blobUrl);
-      });
+      if (line) lines.push(line);
     });
 
+    return lines;
+  }
 
+  function redraw() {
+    if (!imageLoaded) return;
 
-  </script>
+    const text = textInput.value || "";
+    const fontSize = parseInt(fontSizeInput.value, 10);
+    const color = colorInput.value;
+    const fontFamily = fontSelect.value;
+
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    if (!text.trim()) return;
+
+    ctx.font = `700 ${fontSize}px ${fontFamily}`;
+    ctx.textAlign = alignSelect.value;
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = color;
+
+    const lines = wrapText(ctx, text, canvas.width * 0.9);
+    const lineHeight = fontSize * 1.3;
+    const totalHeight = lineHeight * (lines.length - 1);
+
+    let startY =
+      positionSelect.value === "top"
+        ? canvas.height * 0.12
+        : positionSelect.value === "middle"
+        ? canvas.height / 2 - totalHeight / 2
+        : canvas.height * 0.88 - totalHeight;
+
+    let centerX =
+      alignSelect.value === "left"
+        ? canvas.width * 0.1
+        : alignSelect.value === "right"
+        ? canvas.width * 0.9
+        : canvas.width / 2;
+
+    lines.forEach((line, idx) => {
+      ctx.fillText(line, centerX, startY + idx * lineHeight);
+    });
+  }
+
+  /* 다운로드 */
+  document.getElementById("downloadBtn").addEventListener("click", () => {
+    canvas.toBlob((blob) => {
+      const blobUrl = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "insta-image.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(blobUrl);
+    });
+  });
+</script>
+
 </body>
 </html>
-
-
-
-
